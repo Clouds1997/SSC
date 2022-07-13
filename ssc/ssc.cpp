@@ -144,6 +144,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr SSC::getColorCloud(pcl::PointCloud<pcl::P
     return outcloud;
 }
 
+// 这个感觉显示上下文那边的投影
 cv::Mat SSC::project(pcl::PointCloud<pcl::PointXYZL>::Ptr filtered_pointcloud)
 {
     auto sector_step = 2. * M_PI / sectors_range;
@@ -151,8 +152,10 @@ cv::Mat SSC::project(pcl::PointCloud<pcl::PointXYZL>::Ptr filtered_pointcloud)
     for (uint i = 0; i < filtered_pointcloud->points.size(); i++)
     {
         auto label = filtered_pointcloud->points[i].label;
+        // 如果标签是这几个类
         if (label == 13 || label == 14 || label == 16 || label == 18 || label == 19)
         {
+            // 首先计算一下这个点到坐标原地的距离
             float distance = std::sqrt(filtered_pointcloud->points[i].x * filtered_pointcloud->points[i].x + filtered_pointcloud->points[i].y * filtered_pointcloud->points[i].y);
             if (distance < 1e-2)
             {
@@ -217,6 +220,7 @@ cv::Mat SSC::getColorImage(cv::Mat &desc)
     return out;
 }
 
+// 这里好像将投影图进行一个全局的icp匹配
 void SSC::globalICP(cv::Mat &ssc_dis1, cv::Mat &ssc_dis2, double &angle, float &diff_x, float &diff_y)
 {
     double similarity = 100000;
@@ -436,6 +440,7 @@ double SSC::getScore(pcl::PointCloud<pcl::PointXYZL>::Ptr cloud1, pcl::PointClou
     angle = 0;
     diff_x = 0;
     diff_y = 0;
+    // 点云送进来先进行一个投影
     cv::Mat ssc_dis1 = project(cloud1);
     cv::Mat ssc_dis2 = project(cloud2);
     globalICP(ssc_dis1, ssc_dis2, angle, diff_x, diff_y);
