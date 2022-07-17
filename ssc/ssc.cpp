@@ -154,7 +154,7 @@ cv::Mat SSC::project(pcl::PointCloud<pcl::PointXYZL>::Ptr filtered_pointcloud)
         auto label = filtered_pointcloud->points[i].label;
         // 如果标签是这几个类
         if (label == 13 || label == 14 || label == 16 || label == 18 || label == 19)
-        {
+        { 
             // 首先计算一下这个点到坐标原地的距离
             float distance = std::sqrt(filtered_pointcloud->points[i].x * filtered_pointcloud->points[i].x + filtered_pointcloud->points[i].y * filtered_pointcloud->points[i].y);
             if (distance < 1e-2)
@@ -224,7 +224,11 @@ cv::Mat SSC::getColorImage(cv::Mat &desc)
 void SSC::globalICP(cv::Mat &ssc_dis1, cv::Mat &ssc_dis2, double &angle, float &diff_x, float &diff_y)
 {
     double similarity = 100000;
+    // 这里是列举出点云的数量 
     int sectors = ssc_dis1.cols;
+    // 这里的话就是寻找一个最小的角度，使得fabs的值最小
+    // 这样找是不是效率太低了一点
+    // 这里找出来的话，就是可以用i来代表一下两个平面的旋转
     for (int i = 0; i < sectors; ++i)
     {
         float dis_count = 0;
@@ -243,6 +247,8 @@ void SSC::globalICP(cv::Mat &ssc_dis1, cv::Mat &ssc_dis2, double &angle, float &
             angle = i;
         }
     }
+
+    // 将角度进行还原，然后将dis的图像进行一个旋转，将这个和dis进行对齐
     int angle_o = angle;
     angle = M_PI * (360. - angle * 360. / sectors) / 180.;
     auto cs = cos(angle);
@@ -313,6 +319,7 @@ void SSC::globalICP(cv::Mat &ssc_dis1, cv::Mat &ssc_dis2, double &angle, float &
         {
             if (temp_dis2.at<cv::Vec4f>(0, j)[0] != 0)
             {
+                // 进行一个平移的修正
                 temp_dis2.at<cv::Vec4f>(0, j)[1] += dx;
                 temp_dis2.at<cv::Vec4f>(0, j)[2] += dy;
                 if (show)
